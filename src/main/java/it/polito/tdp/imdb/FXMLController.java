@@ -5,8 +5,12 @@
 package it.polito.tdp.imdb;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.imdb.model.Actor;
 import it.polito.tdp.imdb.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,10 +39,10 @@ public class FXMLController {
     private Button btnSimulazione; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxGenere"
-    private ComboBox<?> boxGenere; // Value injected by FXMLLoader
+    private ComboBox<String> boxGenere; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxAttore"
-    private ComboBox<?> boxAttore; // Value injected by FXMLLoader
+    private ComboBox<Actor> boxAttore; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtGiorni"
     private TextField txtGiorni; // Value injected by FXMLLoader
@@ -48,17 +52,46 @@ public class FXMLController {
 
     @FXML
     void doAttoriSimili(ActionEvent event) {
-
+    	Actor a= boxAttore.getValue();
+    	List<Actor> result= new ArrayList<>(model.getSimili(a));
+    	Collections.sort(result);
+    	result.remove(a);
+    	for(Actor as: result) {
+    		txtResult.appendText(as.toString()+"\n");
+    	}
+    	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	txtResult.clear();
+    	String genere=boxGenere.getValue();
+    	if(genere==null) {
+    		txtResult.appendText("Attenzione nessun genere selezionato");
+    		return;
+    	}
+    	model.creaGrafo(genere);
+    	txtResult.appendText(" NUmero di vertici :"+model.getNVertici()+"\n");
+    	txtResult.appendText(" NUmero di archi :"+model.getNArchi()+"\n");
+    	boxAttore.getItems().addAll(this.model.getAttori());
     }
 
     @FXML
     void doSimulazione(ActionEvent event) {
-
+    	String giorniStr= txtGiorni.getText();
+    	Integer giorni;
+    	try {
+    		giorni=Integer.parseInt(giorniStr);
+    	}catch(NumberFormatException nfe) {
+    		txtResult.appendText("Attenzione hai inserito un valore non numerico");
+    		return;
+    	}
+    	model.initializeSim(giorni);
+    	model.run();
+    	List<Actor> result= new ArrayList<>(this.model.getCammino());
+    	for(Actor a:result) {
+    		txtResult.appendText(a.toString()+"\n");
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -75,5 +108,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	boxGenere.getItems().addAll(this.model.getGeneri());
     }
 }
